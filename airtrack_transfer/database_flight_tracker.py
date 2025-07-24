@@ -16,24 +16,12 @@ from database_manager import AirtrackDatabase, DatabaseConfig
 class DatabaseFlightTracker(FlightTracker):
     """
     Erweiterte Version des FlightTrackers mit PostgreSQL-Integration.
-    
-    Features:
-    🗄️ Automatische Database-Persistierung
-    📊 Live-Statistiken aus Database
-    🔄 Synchronisation zwischen Memory und Database
-    📈 Performance-Monitoring
     """
     
     def __init__(self, max_flight_age_hours: int = 24, aircraft_db: AircraftDatabase = None,
                  db_config: DatabaseConfig = None, enable_database: bool = True):
         """
         Initialisiert Database-integrierten FlightTracker.
-        
-        Args:
-            max_flight_age_hours: Maximales Alter für Memory-Flights
-            aircraft_db: Aircraft Database für Anreicherung
-            db_config: PostgreSQL-Konfiguration
-            enable_database: Ob Database-Integration aktiviert werden soll
         """
         # Basis FlightTracker initialisieren (nur max_flight_age_hours)
         super().__init__(max_flight_age_hours)
@@ -88,9 +76,6 @@ class DatabaseFlightTracker(FlightTracker):
     def update_flights(self, aircraft_list: List[Aircraft]):
         """
         Erweiterte update_flights Methode mit Database-Integration.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten
         """
         # 1. Standard Memory-Update
         super().update_flights(aircraft_list)
@@ -112,9 +97,6 @@ class DatabaseFlightTracker(FlightTracker):
     def get_flight_statistics(self) -> Dict:
         """
         Erweiterte Statistiken mit Database-Daten.
-        
-        Returns:
-            Dictionary mit Memory- und Database-Statistiken
         """
         # Standard Memory-Statistiken
         memory_stats = super().get_flight_statistics()
@@ -153,9 +135,6 @@ class DatabaseFlightTracker(FlightTracker):
     def get_database_dashboard(self) -> Dict[str, Any]:
         """
         Ruft Dashboard-Daten aus der Database ab.
-        
-        Returns:
-            Dictionary mit Dashboard-Metriken
         """
         if not (self.database_enabled and self.db_connected):
             return {'error': 'Database nicht verfügbar'}
@@ -186,12 +165,6 @@ class DatabaseFlightTracker(FlightTracker):
     def get_historical_flights(self, hours: int = 24) -> List[Dict]:
         """
         Ruft historische Flüge aus der Database ab.
-        
-        Args:
-            hours: Anzahl Stunden in der Vergangenheit
-            
-        Returns:
-            Liste von Flight-Dictionaries aus der Database
         """
         if not (self.database_enabled and self.db_connected):
             print("⚠️ Database nicht verfügbar für historische Daten")

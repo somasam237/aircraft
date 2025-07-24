@@ -20,7 +20,7 @@ class FlightPosition:
 @dataclass
 class Flight:
     """
-    Repräsentiert einen kompletten Flug mit allen gesammelten Positionen.
+    Repraesentiert einen kompletten Flug mit allen gesammelten Positionen.
     """
     icao24: str
     callsign: Optional[str] = None
@@ -37,7 +37,7 @@ class Flight:
     total_distance: Optional[float] = None
     
     def add_position(self, aircraft: Aircraft):
-        """Fügt eine neue Position zum Flug hinzu."""
+        """Fuegt eine neue Position zum Flug hinzu."""
         if not aircraft.has_position():
             return
         
@@ -162,11 +162,11 @@ class Flight:
             return None
     
     def get_flight_path(self) -> List[Tuple[float, float]]:
-        """Gibt die Flugbahn als Liste von (lat, lon) Tupeln zurück."""
+        """Gibt die Flugbahn als Liste von (lat, lon) Tupeln zurueck."""
         return [(pos.latitude, pos.longitude) for pos in self.positions]
     
     def is_active(self, max_age_minutes: int = 30) -> bool:
-        """Prüft, ob der Flug noch aktiv ist (letzte Position nicht älter als X Minuten)."""
+        """Prueft, ob der Flug noch aktiv ist (letzte Position nicht aelter als X Minuten)."""
         if not self.last_seen:
             return False
         
@@ -180,7 +180,7 @@ class Flight:
 
 class FlightTracker:
     """
-    Verwaltet alle aktiven Flüge und führt Einzelpositionen zu Flugbahnen zusammen.
+    Verwaltet alle aktiven Fluege und führt Einzelpositionen zu Flugbahnen zusammen.
     """
     
     def __init__(self, max_flight_age_hours: int = 24):
@@ -190,12 +190,7 @@ class FlightTracker:
         self.total_flights_tracked = 0
     
     def update_flights(self, aircraft_list: List[Aircraft]):
-        """
-        Aktualisiert alle Flüge mit neuen Aircraft-Daten.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten
-        """
+       
         self.total_updates += 1
         new_flights = 0
         
@@ -212,10 +207,10 @@ class FlightTracker:
                 self.total_flights_tracked += 1
                 new_flights += 1
             
-            # Position zum Flug hinzufügen
+            
             self.flights[icao24].add_position(aircraft)
         
-        # Alte Flüge aufräumen
+        # Alte Fluege aufräumen
         self._cleanup_old_flights()
         
         print(f"✓ {len(aircraft_list)} Aircraft verarbeitet | "
@@ -223,7 +218,7 @@ class FlightTracker:
               f"{len(self.flights)} aktive Flüge")
     
     def _cleanup_old_flights(self):
-        """Entfernt alte, inaktive Flüge."""
+        """Entfernt alte, inaktive Fluege."""
         cutoff_time = datetime.now() - timedelta(hours=self.max_flight_age_hours)
         
         old_flights = []
@@ -240,14 +235,14 @@ class FlightTracker:
             del self.flights[icao24]
         
         if old_flights:
-            print(f"🗑 {len(old_flights)} alte Flüge entfernt")
+            print(f"🗑 {len(old_flights)} alte Fluege entfernt")
     
     def get_active_flights(self) -> List[Flight]:
-        """Gibt alle aktiven Flüge zurück."""
+        """Gibt alle aktiven Fluege zurueck."""
         return [flight for flight in self.flights.values() if flight.is_active()]
     
     def get_flights_by_status(self, status: str) -> List[Flight]:
-        """Gibt Flüge mit einem bestimmten Status zurück."""
+        """Gibt Fluege mit einem bestimmten Status zurueck."""
         return [flight for flight in self.flights.values() 
                 if flight.flight_status == status and flight.is_active()]
     
@@ -289,13 +284,6 @@ class FlightTracker:
                               only_active: bool = True) -> str:
         """
         Exportiert Flugdaten zu JSON.
-        
-        Args:
-            filename: Dateiname (optional)
-            only_active: Nur aktive Flüge exportieren
-            
-        Returns:
-            JSON-String
         """
         flights_to_export = self.get_active_flights() if only_active else list(self.flights.values())
         
@@ -379,13 +367,13 @@ def demo_flight_tracking():
                 
                 # Statistiken anzeigen
                 stats = tracker.get_flight_statistics()
-                print(f"📊 Aktive Flüge: {stats['active_flights']}")
+                print(f"📊 Aktive Fluege: {stats['active_flights']}")
                 print(f"📊 Status-Verteilung: {stats['status_distribution']}")
                 
                 # Zeige Beispiel-Flüge
                 active_flights = tracker.get_active_flights()
                 if active_flights:
-                    print("\n🛩 Beispiel-Flüge:")
+                    print("\n🛩 Beispiel-Fluege:")
                     for flight in active_flights[:3]:
                         duration = flight.get_duration_minutes()
                         distance = flight.total_distance or 0
@@ -396,7 +384,7 @@ def demo_flight_tracking():
                               f"Status: {flight.flight_status}")
             
             if cycle < cycles:
-                print(f"⏱ Warte {interval} Sekunden bis zum nächsten Zyklus...")
+                print(f"⏱ Warte {interval} Sekunden bis zum naechsten Zyklus...")
                 time.sleep(interval)
         
         # Final Export

@@ -7,25 +7,6 @@ from typing import List, Optional, Dict, Any
 class Aircraft:
     """
     Repräsentiert ein Flugzeug mit allen verfügbaren Daten aus dem OpenSky State Vector.
-    
-    OpenSky State Vector Format (Index):
-    0: icao24 - ICAO24 address of the transponder
-    1: callsign - callsign
-    2: origin_country - country name inferred from the ICAO24 address
-    3: time_position - Unix timestamp (seconds) for the last position update
-    4: last_contact - Unix timestamp (seconds) for the last update in general
-    5: longitude - in decimal degrees
-    6: latitude - in decimal degrees
-    7: baro_altitude - barometric altitude in meters
-    8: on_ground - boolean value which indicates if the position was retrieved from a surface position report
-    9: velocity - velocity over ground in m/s
-    10: true_track - true track in decimal degrees clockwise from north (north=0°)
-    11: vertical_rate - vertical rate in m/s
-    12: sensors - IDs of the receivers which contributed to this state vector
-    13: geo_altitude - geometric altitude in meters
-    14: squawk - transponder code aka Squawk
-    15: spi - whether flight status indicates special purpose indicator
-    16: position_source - origin of this state's position
     """
     icao24: str
     callsign: Optional[str] = None
@@ -78,12 +59,6 @@ class DataProcessor:
     def parse_state_vector(self, state: List[Any]) -> Optional[Aircraft]:
         """
         Konvertiert einen OpenSky State Vector in ein Aircraft-Objekt.
-        
-        Args:
-            state: Liste mit State Vector Daten von OpenSky API
-            
-        Returns:
-            Aircraft-Objekt oder None bei Fehlern
         """
         try:
             if not state or len(state) < 17:
@@ -127,12 +102,6 @@ class DataProcessor:
     def process_opensky_data(self, data: Dict[str, Any]) -> List[Aircraft]:
         """
         Verarbeitet komplette OpenSky API Antwort.
-        
-        Args:
-            data: OpenSky API JSON Response
-            
-        Returns:
-            Liste von Aircraft-Objekten
         """
         if not data or 'states' not in data:
             return []
@@ -152,18 +121,6 @@ class DataProcessor:
                        filters: Dict[str, Any] = None) -> List[Aircraft]:
         """
         Filtert Flugzeuge nach verschiedenen Kriterien.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten
-            filters: Dictionary mit Filterkriterien
-                - only_airborne: nur fliegende Flugzeuge
-                - only_with_position: nur Flugzeuge mit Position
-                - country: nur Flugzeuge aus bestimmtem Land
-                - min_altitude: Mindesthöhe in Metern
-                - max_altitude: Maximalhöhe in Metern
-                
-        Returns:
-            Gefilterte Liste von Aircraft-Objekten
         """
         if not filters:
             return aircraft_list
@@ -195,13 +152,7 @@ class DataProcessor:
     
     def get_statistics(self, aircraft_list: List[Aircraft]) -> Dict[str, Any]:
         """
-        Berechnet Statistiken für eine Flugzeugliste.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten
-            
-        Returns:
-            Dictionary mit Statistiken
+        Berechnet Statistiken für eine Flugzeugliste. Returns:  Dictionary mit Statistiken
         """
         if not aircraft_list:
             return {
@@ -245,13 +196,6 @@ class DataProcessor:
                       filename: str = None) -> str:
         """
         Exportiert Flugzeugdaten zu JSON.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten
-            filename: Dateiname (optional)
-            
-        Returns:
-            JSON-String
         """
         data = {
             'timestamp': datetime.now().isoformat(),

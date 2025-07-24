@@ -65,7 +65,7 @@ class FlightRoutesService:
         }
     
     def _load_airport_database(self) -> Dict[str, Any]:
-        """Lädt eine statische Flughafen-Datenbank"""
+        """Laedt eine statische Flughafen-Datenbank"""
         # Wichtige deutsche und europäische Flughäfen
         airports = {
             'EDDF': {'city': 'Frankfurt', 'country': 'Germany', 'name': 'Frankfurt Airport'},
@@ -102,14 +102,7 @@ class FlightRoutesService:
     
     def get_flight_route_info(self, icao24: str, callsign: Optional[str] = None) -> Optional[FlightRoute]:
         """
-        Holt Flugziel-Informationen für ein Aircraft
-        
-        Args:
-            icao24: ICAO24 Aircraft Identifier
-            callsign: Flight Callsign (optional)
-            
-        Returns:
-            FlightRoute object mit Ziel/Herkunft oder None
+        Holt Flugziel-Informationen für ein Aircraft Returns: FlightRoute object mit Ziel/Herkunft oder None
         """
         # Cache prüfen
         cache_key = f"{icao24}_{callsign}"
@@ -140,7 +133,7 @@ class FlightRoutesService:
         return route_info
     
     def _analyze_callsign(self, icao24: str, callsign: str) -> Optional[FlightRoute]:
-        """Analysiert Callsign für Airline und mögliche Routen"""
+        """Analysiert Callsign fuer Airline und moegliche Routen"""
         if not callsign or len(callsign) < 2:
             return None
         
@@ -223,7 +216,7 @@ class FlightRoutesService:
         return None
     
     def _generate_demo_route(self, icao24: str, callsign: Optional[str]) -> FlightRoute:
-        """Generiert Demo-Routendaten für Testzwecke"""
+        """Generiert Demo-Routendaten fuer Testzwecke"""
         import random
         
         # Zufällige Demo-Routen
@@ -306,14 +299,7 @@ class FlightRoutesService:
     
     def filter_flights_by_destination(self, flights: List[Any], destination_country: str) -> List[Any]:
         """
-        Filtert Flüge nach Zielland
-        
-        Args:
-            flights: Liste von Flight-Objekten
-            destination_country: Zielland (z.B. 'Germany')
-            
-        Returns:
-            Gefilterte Liste von Flügen
+        Filtert Flüge nach Zielland Returns: Gefilterte Liste von Flügen
         """
         filtered_flights = []
         
@@ -329,7 +315,7 @@ class FlightRoutesService:
         return filtered_flights
     
     def filter_flights_by_origin(self, flights: List[Any], origin_country: str) -> List[Any]:
-        """Filtert Flüge nach Herkunftsland"""
+        """Filtert Fluege nach Herkunftsland"""
         filtered_flights = []
         
         for flight in flights:
@@ -342,7 +328,7 @@ class FlightRoutesService:
         return filtered_flights
     
     def _country_matches(self, country1: str, country2: str) -> bool:
-        """Prüft ob zwei Ländernamen übereinstimmen (flexibel)"""
+        """Prueft ob zwei Laendernamen uebereinstimmen (flexibel)"""
         if not country1 or not country2:
             return False
         
@@ -359,7 +345,7 @@ class FlightRoutesService:
         return False
     
     def get_available_destinations(self, flights: List[Any]) -> List[str]:
-        """Gibt alle verfügbaren Zielländer zurück"""
+        """Gibt alle verfuegbaren Ziellaender zurueck"""
         destinations = set()
         
         for flight in flights:
@@ -370,7 +356,7 @@ class FlightRoutesService:
         return sorted(list(destinations))
     
     def get_available_origins(self, flights: List[Any]) -> List[str]:
-        """Gibt alle verfügbaren Herkunftsländer zurück"""
+        """Gibt alle verfuegbaren Herkunftslaender zurueck"""
         origins = set()
         
         for flight in flights:

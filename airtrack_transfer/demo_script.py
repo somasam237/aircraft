@@ -102,7 +102,7 @@ print("💡 REST: Q&A und Technical Discussion")
 
 print("\n🚨 PRE-DEMO CHECKLIST:")
 checklist = [
-    "✅ VM läuft und ist erreichbar",
+    "✅ VM laeuft und ist erreichbar",
     "✅ PostgreSQL Service aktiv",
     "✅ SSH-Tunnel funktioniert",
     "✅ Browser-Bookmarks gesetzt",
@@ -120,11 +120,11 @@ tips = [
     "Ruhig sprechen - System braucht paar Sekunden zum Laden",
     "Bei technischen Problemen zu Screenshots wechseln",
     "Publikum interagieren lassen ('Welche Stadt interessiert Sie?')",
-    "Code erklären, aber nicht jede Zeile",
+    "Code erklaeren, aber nicht jede Zeile",
     "Auf Fragen eingehen, aber Demo-Flow beibehalten"
 ]
 
 for tip in tips:
     print(f"   💡 {tip}")
 
-print(f"\n🛫 VIEL ERFOLG MIT IHRER AIRTRACK PRÄSENTATION! 🛫")
+print(f"\n🛫 VIEL ERFOLG MIT IHRER AIRTRACK PRAESENTATION! 🛫")

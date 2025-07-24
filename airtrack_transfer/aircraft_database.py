@@ -12,21 +12,20 @@ class AircraftInfo:
     Diese Daten kommen aus der Aircraft Database und reichern die Live-Daten an.
     """
     icao24: str
-    registration: Optional[str] = None  # Registrierungsnummer (z.B. D-ABCD)
-    aircraft_type: Optional[str] = None  # Flugzeugtyp (z.B. Boeing 737-800)
-    manufacturer: Optional[str] = None  # Hersteller (z.B. Boeing, Airbus)
-    model: Optional[str] = None  # Modell (z.B. 737-800)
-    airline: Optional[str] = None  # Airline (z.B. Lufthansa)
-    airline_iata: Optional[str] = None  # IATA Code (z.B. LH)
-    airline_icao: Optional[str] = None  # ICAO Code (z.B. DLH)
-    owner: Optional[str] = None  # Eigentümer
-    operator: Optional[str] = None  # Betreiber
-    construction_number: Optional[str] = None  # Konstruktionsnummer
-    first_flight: Optional[str] = None  # Erstflug-Datum
-    engines: Optional[str] = None  # Triebwerkstyp
-    seats: Optional[int] = None  # Anzahl Sitzplätze
-    category: Optional[str] = None  # Kategorie (Commercial, Private, Military, etc.)
-    
+    registration: Optional[str] = None  
+    aircraft_type: Optional[str] = None  
+    manufacturer: Optional[str] = None  
+    model: Optional[str] = None  
+    airline: Optional[str] = None  
+    airline_iata: Optional[str] = None  
+    airline_icao: Optional[str] = None  
+    owner: Optional[str] = None  
+    operator: Optional[str] = None  
+    construction_number: Optional[str] = None  
+    first_flight: Optional[str] = None  
+    engines: Optional[str] = None  
+    seats: Optional[int] = None  
+    category: Optional[str] = None  
     def to_dict(self) -> Dict[str, Any]:
         """Konvertiert zu Dictionary für JSON-Export."""
         return {

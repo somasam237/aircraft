@@ -1,5 +1,5 @@
 """
-Database Manager für Airtrack PostgreSQL Integration
+Database Manager fuer Airtrack PostgreSQL Integration
 Verwaltet alle Database-Operationen mit psycopg2
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 @dataclass
 class DatabaseConfig:
-    """Database-Konfiguration für PostgreSQL-Verbindung."""
+    """Database-Konfiguration fuer PostgreSQL-Verbindung."""
     host: str = "localhost"
     port: int = 5432
     database: str = "airtrack_db"
@@ -26,13 +26,7 @@ class DatabaseConfig:
 
 class AirtrackDatabase:
     """
-    Hauptklasse für alle PostgreSQL-Operationen des Airtrack-Systems.
-    
-    Features:
-    - Connection Pooling für Performance
-    - Automatisches Error Handling
-    - Batch-Operationen für große Datenmengen
-    - Statistik-Tracking
+    Hauptklasse fuer alle PostgreSQL-Operationen des Airtrack-Systems.
     """
     
     def __init__(self, config: DatabaseConfig = None):
@@ -50,10 +44,7 @@ class AirtrackDatabase:
     
     def connect(self) -> bool:
         """
-        Stellt Verbindung zur PostgreSQL-Database her.
-        
-        Returns:
-            True wenn erfolgreich, False bei Fehlern
+        Stellt Verbindung zur PostgreSQL-Database her. Returns: True wenn erfolgreich, False bei Fehlern
         """
         try:
             print("🔌 Verbinde mit PostgreSQL...")
@@ -111,15 +102,7 @@ class AirtrackDatabase:
     
     def execute_query(self, query: str, params: tuple = None, fetch: str = None) -> Any:
         """
-        Führt eine SQL-Query aus.
-        
-        Args:
-            query: SQL-Query
-            params: Parameter für die Query
-            fetch: 'one', 'all', 'many' oder None
-            
-        Returns:
-            Query-Ergebnis basierend auf fetch-Parameter
+        Führt eine SQL-Query aus. Returns: Query-Ergebnis basierend auf fetch-Parameter
         """
         conn = None
         try:
@@ -160,13 +143,7 @@ class AirtrackDatabase:
     
     def upsert_aircraft(self, aircraft_info: Dict[str, Any]) -> bool:
         """
-        Fügt Aircraft-Daten ein oder aktualisiert sie.
-        
-        Args:
-            aircraft_info: Dictionary mit Aircraft-Daten
-            
-        Returns:
-            True wenn erfolgreich
+        Fuegt Aircraft-Daten ein oder aktualisiert sie.
         """
         query = """
         INSERT INTO aircraft (
@@ -229,13 +206,7 @@ class AirtrackDatabase:
     
     def get_aircraft(self, icao24: str) -> Optional[Dict]:
         """
-        Ruft Aircraft-Informationen ab.
-        
-        Args:
-            icao24: ICAO24-Adresse
-            
-        Returns:
-            Aircraft-Dictionary oder None
+        Ruft Aircraft-Informationen ab. Returns: Aircraft-Dictionary oder None
         """
         query = "SELECT * FROM aircraft WHERE icao24 = %s"
         result = self.execute_query(query, (icao24,), fetch='one')
@@ -248,15 +219,7 @@ class AirtrackDatabase:
     def create_or_get_flight(self, icao24: str, callsign: str = None, 
                            origin_country: str = None) -> int:
         """
-        Erstellt einen neuen Flug oder gibt bestehende flight_id zurück.
-        
-        Args:
-            icao24: ICAO24-Adresse
-            callsign: Callsign (optional)
-            origin_country: Herkunftsland (optional)
-            
-        Returns:
-            flight_id
+        Erstellt einen neuen Flug oder gibt bestehende flight_id zurueck.
         """
         # Prüfe, ob bereits ein aktiver Flug existiert (letzte 4 Stunden)
         query_check = """
@@ -300,14 +263,7 @@ class AirtrackDatabase:
     
     def add_flight_position(self, flight_id: int, position_data: Dict[str, Any]) -> bool:
         """
-        Fügt eine neue GPS-Position zu einem Flug hinzu.
-        
-        Args:
-            flight_id: ID des Flugs
-            position_data: Position-Dictionary
-            
-        Returns:
-            True wenn erfolgreich
+        Fuegt eine neue GPS-Position zu einem Flug hinzu. Returns: True wenn erfolgreich
         """
         query = """
         INSERT INTO flight_positions (
@@ -354,12 +310,6 @@ class AirtrackDatabase:
     def calculate_flight_statistics(self, flight_id: int) -> bool:
         """
         Berechnet Statistiken für einen Flug (nutzt die SQL-Funktion).
-        
-        Args:
-            flight_id: ID des Flugs
-            
-        Returns:
-            True wenn erfolgreich
         """
         try:
             self.execute_query("SELECT calculate_flight_statistics(%s)", (flight_id,))
@@ -375,12 +325,6 @@ class AirtrackDatabase:
     def process_aircraft_batch(self, aircraft_list: List[Any]) -> Dict[str, int]:
         """
         Verarbeitet eine komplette Batch von Aircraft-Objekten.
-        
-        Args:
-            aircraft_list: Liste von Aircraft-Objekten (aus data_processor)
-            
-        Returns:
-            Statistiken über die Verarbeitung
         """
         print(f"🚀 Verarbeite Batch von {len(aircraft_list)} Aircraft...")
         
@@ -480,10 +424,7 @@ class AirtrackDatabase:
 
 def create_database_config_from_env() -> DatabaseConfig:
     """
-    Erstellt Database-Config aus Environment-Variablen oder .env-Datei.
-    
-    Returns:
-        DatabaseConfig-Objekt
+    Erstellt Database-Config aus Environment-Variablen 
     """
     # Versuche .env-Datei zu laden
     env_file = Path('.env')
