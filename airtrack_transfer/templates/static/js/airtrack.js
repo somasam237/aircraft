@@ -1,19 +1,18 @@
-/**
- * Airtrack - Live Flight Tracking JavaScript
- * Interaktive Karte und Echtzeit-Flugzeugverfolgung
- */
-
 // Globale Variablen
 let map;
 let socket;
 let flightMarkers = {};
 let flightPaths = {};
 let liveUpdatesEnabled = false;
+let currentFilter = null; // Aktueller Filter
+let availableDestinations = [];
+let availableOrigins = [];
 
 // Initialisierung beim Laden der Seite
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     initializeWebSocket();
+    initializeFilterControls();
     loadInitialData();
 });
 
@@ -39,23 +38,23 @@ function initializeWebSocket() {
     socket = io();
     
     socket.on('connect', function() {
-        console.log('✅ WebSocket verbunden');
+        console.log('WebSocket verbunden');
         updateConnectionStatus(true);
     });
     
     socket.on('disconnect', function() {
-        console.log('❌ WebSocket getrennt');
+        console.log(' WebSocket getrennt');
         updateConnectionStatus(false);
     });
     
     socket.on('flight_update', function(data) {
-        console.log(`🔄 Flight Update: ${data.flights.length} Flugzeuge`);
+        console.log(`Flight Update: ${data.flights.length} Flugzeuge`);
         updateFlightDisplay(data.flights);
         updateLastUpdate(data.timestamp);
     });
     
     socket.on('status', function(data) {
-        console.log('📡 Status:', data.message);
+        console.log('Status:', data.message);
     });
 }
 
@@ -67,11 +66,11 @@ function updateConnectionStatus(connected) {
     const status = document.getElementById('connection-status');
     
     if (connected) {
-        indicator.textContent = '✅ Verbunden';
+        indicator.textContent = 'Verbunden';
         indicator.className = 'connection-status';
         status.textContent = 'Verbunden';
     } else {
-        indicator.textContent = '❌ Getrennt';
+        indicator.textContent = 'Getrennt';
         indicator.className = 'connection-status disconnected';
         status.textContent = 'Verbindung getrennt';
     }
@@ -84,11 +83,47 @@ async function loadInitialData() {
     try {
         await Promise.all([
             loadFlights(),
-            loadStatistics()
+            loadStatistics(),
+            loadAvailableDestinations(),
+            loadAvailableOrigins()
         ]);
     } catch (error) {
         console.error('Fehler beim Laden der initialen Daten:', error);
     }
+}
+
+/**
+ * Filter-Controls initialisieren
+ */
+function initializeFilterControls() {
+    // Filter-Buttons Event Listeners
+    document.getElementById('btn-all-flights')?.addEventListener('click', () => {
+        clearFilter();
+        loadFlights();
+    });
+    
+    document.getElementById('btn-to-germany')?.addEventListener('click', () => {
+        filterFlightsByDestination('Germany');
+    });
+    
+    document.getElementById('btn-from-usa')?.addEventListener('click', () => {
+        filterFlightsByOrigin('United States');
+    });
+    
+    // Dropdown Event Listeners
+    document.getElementById('destination-filter')?.addEventListener('change', (e) => {
+        if (e.target.value) {
+            filterFlightsByDestination(e.target.value);
+        }
+    });
+    
+    document.getElementById('origin-filter')?.addEventListener('change', (e) => {
+        if (e.target.value) {
+            filterFlightsByOrigin(e.target.value);
+        }
+    });
+    
+    console.log('🎛️ Filter-Controls initialisiert');
 }
 
 /**
@@ -106,11 +141,62 @@ async function loadFlights() {
         updateFlightDisplay(data.flights);
         updateFlightsList(data.flights);
         
-        console.log(`✈️ ${data.flights.length} Flüge geladen`);
+        console.log(`✈️ ${data.flights.length} aktuelle Flüge geladen`);
     } catch (error) {
         console.error('Fehler beim Laden der Flüge:', error);
         document.getElementById('flights-container').innerHTML = 
             '<div style="color: red;">Fehler beim Laden der Flüge</div>';
+    }
+}
+
+/**
+ * ALLE gespeicherten Flüge aus der Datenbank laden
+ */
+async function loadAllStoredFlights() {
+    try {
+        console.log('🗄️ Lade alle gespeicherten Flüge aus der Datenbank...');
+        
+        // Loading-Indikator anzeigen
+        document.getElementById('flights-container').innerHTML = 
+            '<div style="color: blue;">📡 Lade alle gespeicherten Flüge...</div>';
+        
+        const response = await fetch('/api/flights/database/all');
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Filter-Status aktualisieren
+        document.getElementById('filter-status').textContent = 'Alle gespeicherten Flüge';
+        document.getElementById('flight-count').textContent = `(${data.total_count} Flüge)`;
+        
+        // Flüge anzeigen
+        updateFlightDisplay(data.flights);
+        updateFlightsList(data.flights);
+        
+        console.log(`🗄️ ${data.total_count} gespeicherte Flüge aus Datenbank geladen`);
+        
+        // Erfolgs-Nachricht kurz anzeigen
+        const statusElement = document.getElementById('connection-status');
+        const originalText = statusElement.textContent;
+        statusElement.textContent = `✅ ${data.total_count} gespeicherte Flüge geladen`;
+        statusElement.style.color = 'green';
+        
+        setTimeout(() => {
+            statusElement.textContent = originalText;
+            statusElement.style.color = '';
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden aller Flüge:', error);
+        document.getElementById('flights-container').innerHTML = 
+            '<div style="color: red;">❌ Fehler beim Laden der gespeicherten Flüge</div>';
+            
+        // Fehler-Nachricht anzeigen
+        const statusElement = document.getElementById('connection-status');
+        statusElement.textContent = '❌ Fehler beim Laden der Datenbank-Flüge';
+        statusElement.style.color = 'red';
     }
 }
 
@@ -202,10 +288,21 @@ function updateFlightMarker(flight) {
  * Flight Icon basierend auf Status zurückgeben
  */
 function getFlightIcon(flight) {
+    // Bessere, einfachere Flugzeug-Icons
     if (flight.on_ground) {
-        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzc1NzU3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEySDNsOS05IDkgOXoiLz4KPHN2Zz4K';
+        // Grauer Flugzeug-Icon für am Boden
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666666" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+            </svg>
+        `);
     } else {
-        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzIxOTZGMyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEySDNsOS05IDkgOXoiLz4KPHN2Zz4K';
+        // Blauer Flugzeug-Icon für in der Luft
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2196F3" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+            </svg>
+        `);
     }
 }
 
@@ -214,38 +311,100 @@ function getFlightIcon(flight) {
  */
 function createFlightPopup(flight) {
     const aircraftInfo = flight.aircraft_info || {};
+    const routeInfo = flight.route_info || {};
     
-    return `
+    // Korrekte Status-Darstellung
+    const statusText = flight.on_ground ? 'Am Boden' : 'In der Luft';
+    const statusClass = flight.on_ground ? 'ground' : 'airborne';
+    
+    let popupContent = `
         <div class="flight-popup">
-            <div class="popup-header">${flight.callsign}</div>
-            <div class="popup-detail">
-                <span class="popup-label">ICAO24:</span> ${flight.icao24}
+            <div class="popup-header">
+                ✈️ ${flight.callsign}
+                <span class="flight-status flight-status-${statusClass}">${statusText}</span>
             </div>
-            <div class="popup-detail">
-                <span class="popup-label">Land:</span> ${flight.origin_country}
+            
+            <div class="popup-section">
+                <h4>📍 Flugdaten</h4>
+                <div class="popup-detail">
+                    <span class="popup-label">ICAO24:</span> ${flight.icao24}
+                </div>
+                <div class="popup-detail">
+                    <span class="popup-label">Registrierungsland:</span> ${flight.origin_country}
+                </div>
+                <div class="popup-detail">
+                    <span class="popup-label">Höhe:</span> ${flight.altitude ? Math.round(flight.altitude) + ' m' : 'N/A'}
+                </div>
+                <div class="popup-detail">
+                    <span class="popup-label">Geschwindigkeit:</span> ${flight.velocity ? Math.round(flight.velocity * 3.6) + ' km/h' : 'N/A'}
+                </div>
+            </div>`;
+    
+    // Route-Informationen hinzufügen (NEUE FUNKTION)
+    if (routeInfo && (routeInfo.origin_city || routeInfo.destination_city || routeInfo.airline)) {
+        popupContent += `
+            <div class="popup-section route-info">
+                <h4>🛫 Flugstrecke</h4>`;
+        
+        if (routeInfo.airline) {
+            popupContent += `
+                <div class="popup-detail">
+                    <span class="popup-label">Airline:</span> 
+                    <span class="airline">${routeInfo.airline}</span>
+                </div>`;
+        }
+        
+        if (routeInfo.origin_city || routeInfo.destination_city) {
+            const origin = routeInfo.origin_city ? `${routeInfo.origin_city}` : 'Unbekannt';
+            const originCountry = routeInfo.origin_country ? ` (${routeInfo.origin_country})` : '';
+            const dest = routeInfo.destination_city ? `${routeInfo.destination_city}` : 'Unbekannt';
+            const destCountry = routeInfo.destination_country ? ` (${routeInfo.destination_country})` : '';
+            
+            popupContent += `
+                <div class="popup-detail route">
+                    <span class="popup-label">Route:</span><br>
+                    🛫 ${origin}${originCountry} <span class="route-arrow">→</span> 🛬 ${dest}${destCountry}
+                </div>`;
+        }
+        
+        popupContent += `</div>`;
+    }
+    
+    // Flugzeug-Informationen
+    if (aircraftInfo.aircraft_type || aircraftInfo.airline) {
+        popupContent += `
+            <div class="popup-section">
+                <h4>✈️ Flugzeugdaten</h4>`;
+        
+        if (aircraftInfo.aircraft_type) {
+            popupContent += `
+                <div class="popup-detail">
+                    <span class="popup-label">Flugzeugtyp:</span> ${aircraftInfo.aircraft_type}
+                </div>`;
+        }
+        
+        if (aircraftInfo.registration) {
+            popupContent += `
+                <div class="popup-detail">
+                    <span class="popup-label">Registrierung:</span> ${aircraftInfo.registration}
+                </div>`;
+        }
+        
+        popupContent += `</div>`;
+    }
+    
+    popupContent += `
+            <div class="popup-actions">
+                <button onclick="focusOnFlight('${flight.icao24}')" class="popup-btn">
+                    🎯 Verfolgen
+                </button>
+                <button onclick="loadFlightPath('${flight.icao24}')" class="popup-btn">
+                    📍 Flugbahn
+                </button>
             </div>
-            <div class="popup-detail">
-                <span class="popup-label">Höhe:</span> ${flight.altitude ? Math.round(flight.altitude) + ' m' : 'N/A'}
-            </div>
-            <div class="popup-detail">
-                <span class="popup-label">Geschwindigkeit:</span> ${flight.velocity ? Math.round(flight.velocity * 3.6) + ' km/h' : 'N/A'}
-            </div>
-            <div class="popup-detail">
-                <span class="popup-label">Status:</span> 
-                <span class="flight-status status-${flight.flight_status}">${flight.flight_status}</span>
-            </div>
-            ${aircraftInfo.aircraft_type ? `
-            <div class="popup-detail">
-                <span class="popup-label">Flugzeugtyp:</span> ${aircraftInfo.aircraft_type}
-            </div>
-            ` : ''}
-            ${aircraftInfo.airline ? `
-            <div class="popup-detail">
-                <span class="popup-label">Airline:</span> ${aircraftInfo.airline}
-            </div>
-            ` : ''}
-        </div>
-    `;
+        </div>`;
+    
+    return popupContent;
 }
 
 /**
@@ -369,21 +528,219 @@ function toggleLiveUpdates() {
         body: JSON.stringify({ enable: liveUpdatesEnabled })
     });
     
-    const btn = document.getElementById('live-updates-btn');
-    if (liveUpdatesEnabled) {
-        btn.textContent = 'Live-Updates stoppen';
-        btn.className = 'btn btn-danger';
-    } else {
-        btn.textContent = 'Live-Updates starten';
-        btn.className = 'btn btn-success';
+    updateLiveUpdateButton();
+}
+
+/**
+ * Live-Update Button aktualisieren
+ */
+function updateLiveUpdateButton() {
+    const button = document.getElementById('toggle-live-updates');
+    if (button) {
+        if (liveUpdatesEnabled) {
+            button.textContent = '⏸️ Live Updates stoppen';
+            button.className = 'btn btn-danger'; // ROT wenn aktiv
+        } else {
+            button.textContent = '▶️ Live Updates starten';
+            button.className = 'btn btn-success'; // GRÜN wenn inaktiv
+        }
     }
+}
+
+// ============================================
+// NEUE FILTER-FUNKTIONEN
+// ============================================
+
+/**
+ * Flüge nach Zielland filtern
+ */
+async function filterFlightsByDestination(country) {
+    try {
+        clearAllMarkers();
+        updateFilterStatus(`Ziel: ${country}`);
+        currentFilter = { type: 'destination', value: country };
+        
+        const response = await fetch(`/api/flights/filter/destination/${encodeURIComponent(country)}`);
+        const data = await response.json();
+        
+        if (data.flights) {
+            updateFlightDisplay(data.flights);
+            updateFlightCount(data.total_count, `nach ${country}`);
+            console.log(`🎯 ${data.total_count} Flüge nach ${country} geladen`);
+        } else {
+            console.error('Fehler beim Filtern:', data.error);
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden gefilterter Flüge:', error);
+    }
+}
+
+/**
+ * Flüge nach Herkunftsland filtern
+ */
+async function filterFlightsByOrigin(country) {
+    try {
+        clearAllMarkers();
+        updateFilterStatus(`Herkunft: ${country}`);
+        currentFilter = { type: 'origin', value: country };
+        
+        const response = await fetch(`/api/flights/filter/origin/${encodeURIComponent(country)}`);
+        const data = await response.json();
+        
+        if (data.flights) {
+            updateFlightDisplay(data.flights);
+            updateFlightCount(data.total_count, `von ${country}`);
+            console.log(`🎯 ${data.total_count} Flüge von ${country} geladen`);
+        } else {
+            console.error('Fehler beim Filtern:', data.error);
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden gefilterter Flüge:', error);
+    }
+}
+
+/**
+ * Filter zurücksetzen
+ */
+function clearFilter() {
+    currentFilter = null;
+    updateFilterStatus('Alle Flüge');
+    clearFilterDropdowns();
+}
+
+/**
+ * Filter-Status in der UI aktualisieren
+ */
+function updateFilterStatus(status) {
+    const statusElement = document.getElementById('filter-status');
+    if (statusElement) {
+        statusElement.textContent = status;
+    }
+}
+
+/**
+ * Flug-Anzahl aktualisieren
+ */
+function updateFlightCount(count, description = '') {
+    const countElement = document.getElementById('flight-count');
+    if (countElement) {
+        countElement.textContent = `${count} Flüge ${description}`;
+    }
+}
+
+/**
+ * Alle Marker von der Karte entfernen
+ */
+function clearAllMarkers() {
+    Object.values(flightMarkers).forEach(marker => {
+        map.removeLayer(marker);
+    });
+    flightMarkers = {};
+    
+    Object.values(flightPaths).forEach(path => {
+        map.removeLayer(path);
+    });
+    flightPaths = {};
+}
+
+/**
+ * Filter-Dropdowns zurücksetzen
+ */
+function clearFilterDropdowns() {
+    const destFilter = document.getElementById('destination-filter');
+    const originFilter = document.getElementById('origin-filter');
+    
+    if (destFilter) destFilter.value = '';
+    if (originFilter) originFilter.value = '';
+}
+
+/**
+ * Verfügbare Zielländer laden
+ */
+async function loadAvailableDestinations() {
+    try {
+        const response = await fetch('/api/flights/destinations');
+        const data = await response.json();
+        
+        if (data.destinations) {
+            availableDestinations = data.destinations;
+            populateDestinationDropdown(data.destinations);
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Zielländer:', error);
+    }
+}
+
+/**
+ * Verfügbare Herkunftsländer laden
+ */
+async function loadAvailableOrigins() {
+    try {
+        const response = await fetch('/api/flights/origins');
+        const data = await response.json();
+        
+        if (data.origins) {
+            availableOrigins = data.origins;
+            populateOriginDropdown(data.origins);
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Herkunftsländer:', error);
+    }
+}
+
+/**
+ * Zielländer-Dropdown befüllen
+ */
+function populateDestinationDropdown(destinations) {
+    const select = document.getElementById('destination-filter');
+    if (!select) return;
+    
+    // Dropdown leeren
+    select.innerHTML = '<option value="">Zielland wählen...</option>';
+    
+    // Optionen hinzufügen
+    destinations.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        select.appendChild(option);
+    });
+}
+
+/**
+ * Herkunftsländer-Dropdown befüllen
+ */
+function populateOriginDropdown(origins) {
+    const select = document.getElementById('origin-filter');
+    if (!select) return;
+    
+    // Dropdown leeren
+    select.innerHTML = '<option value="">Herkunftsland wählen...</option>';
+    
+    // Optionen hinzufügen
+    origins.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        select.appendChild(option);
+    });
 }
 
 /**
  * Daten manuell aktualisieren
  */
 function refreshData() {
-    loadInitialData();
+    if (currentFilter) {
+        // Aktuellen Filter erneut anwenden
+        if (currentFilter.type === 'destination') {
+            filterFlightsByDestination(currentFilter.value);
+        } else if (currentFilter.type === 'origin') {
+            filterFlightsByOrigin(currentFilter.value);
+        }
+    } else {
+        // Alle Flüge laden
+        loadInitialData();
+    }
 }
 
 /**

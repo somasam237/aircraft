@@ -17,6 +17,7 @@ from database_manager import create_database_config_from_env
 from aircraft_database import AircraftDatabase
 from airtrack_main import fetch_opensky_data
 from data_processor import DataProcessor
+from flight_routes_service import flight_routes_service
 
 class AirtrackWebServer:
     """
@@ -30,7 +31,7 @@ class AirtrackWebServer:
     📈 Historical Data Visualization
     """
     
-    def __init__(self, host='localhost', port=5000, debug=False):
+    def __init__(self, host='0.0.0.0', port=5000, debug=False):
         self.app = Flask(__name__, static_folder='templates/static')
         self.app.config['SECRET_KEY'] = 'airtrack_secret_key_2025'
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
@@ -116,6 +117,15 @@ class AirtrackWebServer:
                     if flight.positions:
                         latest_pos = flight.positions[-1]
                         
+                        # Route-Informationen holen
+                        route_info = flight_routes_service.get_flight_route_info(
+                            flight.icao24, 
+                            flight.callsign
+                        )
+                        
+                        # Korrekter Flight Status basierend auf on_ground
+                        flight_status = "ground" if latest_pos.on_ground else "airborne"
+                        
                         flight_info = {
                             'icao24': flight.icao24,
                             'callsign': flight.callsign or 'N/A',
@@ -126,10 +136,19 @@ class AirtrackWebServer:
                             'velocity': latest_pos.velocity,
                             'true_track': latest_pos.true_track,
                             'on_ground': latest_pos.on_ground,
-                            'flight_status': flight.flight_status,
+                            'flight_status': flight_status,  # Korrigierter Status
                             'positions_count': len(flight.positions),
                             'last_seen': flight.last_seen,
-                            'aircraft_info': flight.aircraft_info if hasattr(flight, 'aircraft_info') else None
+                            'aircraft_info': flight.aircraft_info if hasattr(flight, 'aircraft_info') else None,
+                            # Neue Route-Informationen
+                            'route_info': {
+                                'origin_city': route_info.origin_city if route_info else None,
+                                'origin_country': route_info.origin_country if route_info else None,
+                                'destination_city': route_info.destination_city if route_info else None,
+                                'destination_country': route_info.destination_country if route_info else None,
+                                'airline': route_info.airline if route_info else None,
+                                'flight_number': route_info.flight_number if route_info else None
+                            } if route_info else None
                         }
                         flight_data.append(flight_info)
                 
@@ -172,6 +191,174 @@ class AirtrackWebServer:
                 
             except Exception as e:
                 return jsonify({'error': str(e)})
+        
+        @self.app.route('/api/flights/filter/destination/<destination_country>')
+        def get_flights_to_destination(destination_country):
+            """API: Flüge nach bestimmtem Zielland."""
+            if not self.flight_tracker:
+                return jsonify({'error': 'Flight Tracker nicht initialisiert'})
+            
+            try:
+                # Aktuelle Flüge holen
+                active_flights = self.flight_tracker.get_active_flights()
+                
+                # Nach Zielland filtern
+                filtered_flights = flight_routes_service.filter_flights_by_destination(
+                    active_flights, destination_country
+                )
+                
+                # Format für Karte
+                flight_data = []
+                for flight in filtered_flights:
+                    if flight.positions:
+                        latest_pos = flight.positions[-1]
+                        route_info = flight.route_info if hasattr(flight, 'route_info') else None
+                        
+                        flight_info = {
+                            'icao24': flight.icao24,
+                            'callsign': flight.callsign or 'N/A',
+                            'origin_country': flight.origin_country or 'Unknown',
+                            'latitude': latest_pos.latitude,
+                            'longitude': latest_pos.longitude,
+                            'altitude': latest_pos.altitude,
+                            'velocity': latest_pos.velocity,
+                            'true_track': latest_pos.true_track,
+                            'on_ground': latest_pos.on_ground,
+                            'flight_status': "ground" if latest_pos.on_ground else "airborne",
+                            'route_info': {
+                                'origin_city': route_info.origin_city if route_info else None,
+                                'origin_country': route_info.origin_country if route_info else None,
+                                'destination_city': route_info.destination_city if route_info else None,
+                                'destination_country': route_info.destination_country if route_info else None,
+                                'airline': route_info.airline if route_info else None
+                            } if route_info else None
+                        }
+                        flight_data.append(flight_info)
+                
+                return jsonify({
+                    'flights': flight_data,
+                    'total_count': len(flight_data),
+                    'filter': f'destination: {destination_country}',
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        
+        @self.app.route('/api/flights/filter/origin/<origin_country>')
+        def get_flights_from_origin(origin_country):
+            """API: Flüge von bestimmtem Herkunftsland."""
+            if not self.flight_tracker:
+                return jsonify({'error': 'Flight Tracker nicht initialisiert'})
+            
+            try:
+                # Aktuelle Flüge holen
+                active_flights = self.flight_tracker.get_active_flights()
+                
+                # Nach Herkunftsland filtern
+                filtered_flights = flight_routes_service.filter_flights_by_origin(
+                    active_flights, origin_country
+                )
+                
+                # Format für Karte
+                flight_data = []
+                for flight in filtered_flights:
+                    if flight.positions:
+                        latest_pos = flight.positions[-1]
+                        route_info = flight.route_info if hasattr(flight, 'route_info') else None
+                        
+                        flight_info = {
+                            'icao24': flight.icao24,
+                            'callsign': flight.callsign or 'N/A',
+                            'origin_country': flight.origin_country or 'Unknown',
+                            'latitude': latest_pos.latitude,
+                            'longitude': latest_pos.longitude,
+                            'altitude': latest_pos.altitude,
+                            'velocity': latest_pos.velocity,
+                            'true_track': latest_pos.true_track,
+                            'on_ground': latest_pos.on_ground,
+                            'flight_status': "ground" if latest_pos.on_ground else "airborne",
+                            'route_info': {
+                                'origin_city': route_info.origin_city if route_info else None,
+                                'origin_country': route_info.origin_country if route_info else None,
+                                'destination_city': route_info.destination_city if route_info else None,
+                                'destination_country': route_info.destination_country if route_info else None,
+                                'airline': route_info.airline if route_info else None
+                            } if route_info else None
+                        }
+                        flight_data.append(flight_info)
+                
+                return jsonify({
+                    'flights': flight_data,
+                    'total_count': len(flight_data),
+                    'filter': f'origin: {origin_country}',
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        
+        @self.app.route('/api/flights/destinations')
+        def get_available_destinations():
+            """API: Alle verfügbaren Zielländer."""
+            if not self.flight_tracker:
+                return jsonify({'error': 'Flight Tracker nicht initialisiert'})
+            
+            try:
+                active_flights = self.flight_tracker.get_active_flights()
+                destinations = flight_routes_service.get_available_destinations(active_flights)
+                
+                return jsonify({
+                    'destinations': destinations,
+                    'count': len(destinations)
+                })
+                
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        
+        @self.app.route('/api/flights/origins')
+        def get_available_origins():
+            """API: Alle verfügbaren Herkunftsländer."""
+            if not self.flight_tracker:
+                return jsonify({'error': 'Flight Tracker nicht initialisiert'})
+            
+            try:
+                active_flights = self.flight_tracker.get_active_flights()
+                origins = flight_routes_service.get_available_origins(active_flights)
+                
+                return jsonify({
+                    'origins': origins,
+                    'count': len(origins)
+                })
+                
+            except Exception as e:
+                return jsonify({'error': str(e)})
+        
+        @self.app.route('/api/flights/database/all')
+        def get_all_database_flights():
+            """API: Alle gespeicherten Flüge aus der Datenbank."""
+            if not self.flight_tracker:
+                return jsonify({'error': 'Flight Tracker nicht initialisiert'})
+            
+            try:
+                # Hole alle Flüge aus der Datenbank
+                all_flights = self.flight_tracker.get_all_stored_flights()
+                
+                # Anzahl berechnen
+                total_count = len(all_flights)
+                
+                print(f"📊 API: {total_count} gespeicherte Flüge aus DB abgerufen")
+                
+                return jsonify({
+                    'success': True,
+                    'flights': all_flights,
+                    'total_count': total_count,
+                    'message': f'{total_count} gespeicherte Flüge geladen'
+                })
+                
+            except Exception as e:
+                print(f"❌ Fehler beim Abrufen aller DB-Flüge: {e}")
+                return jsonify({'error': f'Fehler beim Laden der Flüge: {str(e)}'})
         
         @self.app.route('/api/statistics')
         def get_statistics():
@@ -340,5 +527,5 @@ class AirtrackWebServer:
         )
 
 if __name__ == "__main__":
-    server = AirtrackWebServer(host='localhost', port=5000, debug=True)
+    server = AirtrackWebServer(host='0.0.0.0', port=5000, debug=True)
     server.run()

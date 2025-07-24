@@ -111,6 +111,15 @@ body {
     background: #229954;
 }
 
+.btn.btn-info {
+    background: #3498db;
+    color: white;
+}
+
+.btn.btn-info:hover {
+    background: #2980b9;
+}
+
 /* Statistics Panel */
 .stats-panel {
     padding: 20px;
@@ -286,4 +295,216 @@ body {
     .stat-item {
         padding: 6px;
     }
+}
+
+/* ============================================ */
+/* NEUE FILTER-STYLES */
+/* ============================================ */
+
+/* Filter Panel */
+.filter-panel {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.filter-panel h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.filter-status {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-status strong {
+    color: #495057;
+}
+
+.flight-count {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Filter Controls */
+.filter-controls {
+    margin-top: 1rem;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.filter-group h4 {
+    margin: 0 0 0.75rem 0;
+    color: #495057;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Filter Select Dropdowns */
+.filter-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-select:hover {
+    border-color: #adb5bd;
+}
+
+/* Quick Filter Buttons */
+.quick-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-filter:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Status Indicators */
+.filter-active {
+    position: relative;
+}
+
+.filter-active::after {
+    content: "🔥";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.8rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile Responsive für Filter */
+@media (max-width: 768px) {
+    .filter-panel {
+        padding: 0.75rem;
+    }
+    
+    .filter-group {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-select {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn-filter {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .quick-filters {
+        justify-content: center;
+    }
+}
+
+/* Enhanced Flight Status Colors */
+.flight-status-airborne {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.flight-status-ground {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.route-info {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.route-info .airline {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.route-info .route {
+    color: #495057;
+    margin-top: 0.25rem;
+}
+
+.route-arrow {
+    color: #6c757d;
+    margin: 0 0.5rem;
 }

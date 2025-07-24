@@ -42,9 +42,63 @@
                 </div>
                 
                 <div class="control-group">
+                    <button class="btn btn-info" onclick="loadAllStoredFlights()">
+                        🗄️ Alle gespeicherten Flüge
+                    </button>
+                </div>
+                
+                <div class="control-group">
                     <button class="btn" onclick="centerMap()">
                         🎯 Karte zentrieren
                     </button>
+                </div>
+            </div>
+            
+            <!-- NEUE FILTER-SEKTION -->
+            <div class="filter-panel">
+                <h3>🎯 Flugfilter</h3>
+                
+                <div class="filter-status">
+                    <strong>Aktueller Filter:</strong> 
+                    <span id="filter-status">Alle Flüge</span>
+                    <span id="flight-count" class="flight-count"></span>
+                </div>
+                
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <h4>🛬 Nach Zielland</h4>
+                        <select id="destination-filter" class="filter-select">
+                            <option value="">Zielland wählen...</option>
+                        </select>
+                        
+                        <div class="quick-filters">
+                            <button id="btn-to-germany" class="btn btn-small btn-filter" 
+                                    onclick="filterFlightsByDestination('Germany')">
+                                🇩🇪 Nach Deutschland
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <h4>🛫 Nach Herkunftsland</h4>
+                        <select id="origin-filter" class="filter-select">
+                            <option value="">Herkunftsland wählen...</option>
+                        </select>
+                        
+                        <div class="quick-filters">
+                            <button id="btn-from-usa" class="btn btn-small btn-filter" 
+                                    onclick="filterFlightsByOrigin('United States')">
+                                🇺🇸 Von USA
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <button id="btn-all-flights" class="btn btn-primary" 
+                                onclick="clearFilter(); loadFlights()">
+                            🌍 Alle Flüge anzeigen
+                        </button>
+                    </div>
                 </div>
             </div>
             

@@ -215,6 +215,69 @@ class DatabaseFlightTracker(FlightTracker):
             print(f"❌ Fehler beim Abrufen historischer Flüge: {e}")
             return []
     
+    def get_all_stored_flights(self, limit: int = 5000) -> List[Dict]:
+        """
+        Ruft ALLE gespeicherten Flüge aus der Database ab.
+        
+        Args:
+            limit: Maximale Anzahl zurückzugebender Flüge
+            
+        Returns:
+            Liste aller Flight-Dictionaries aus der Database
+        """
+        if not (self.database_enabled and self.db_connected):
+            print("⚠️ Database nicht verfügbar für alle Flüge")
+            return []
+        
+        try:
+            # Erweiterte Abfrage für alle Flüge mit aktuellster Position
+            query = """
+            SELECT DISTINCT ON (f.icao24) 
+                   f.flight_id, f.icao24, f.callsign, f.origin_country, 
+                   f.flight_status, f.first_seen, f.last_seen, f.position_count,
+                   p.latitude, p.longitude, p.altitude, p.velocity, 
+                   p.true_track, p.on_ground, p.timestamp as fetch_time
+            FROM flights f
+            LEFT JOIN positions p ON f.flight_id = p.flight_id
+            WHERE p.timestamp = (
+                SELECT MAX(timestamp) 
+                FROM positions p2 
+                WHERE p2.flight_id = f.flight_id
+            )
+            ORDER BY f.icao24, f.last_seen DESC
+            LIMIT %s
+            """
+            
+            result = self.airtrack_db.execute_query(query, (limit,), fetch='all')
+            
+            flights = []
+            for row in result:
+                flight_data = {
+                    'flight_id': row[0],
+                    'icao24': row[1], 
+                    'callsign': row[2],
+                    'origin_country': row[3],
+                    'flight_status': row[4],
+                    'first_seen': row[5].isoformat() if row[5] else None,
+                    'last_seen': row[6].isoformat() if row[6] else None,
+                    'position_count': row[7],
+                    'latitude': float(row[8]) if row[8] else None,
+                    'longitude': float(row[9]) if row[9] else None,
+                    'altitude': float(row[10]) if row[10] else None,
+                    'velocity': float(row[11]) if row[11] else None,
+                    'true_track': float(row[12]) if row[12] else None,
+                    'on_ground': bool(row[13]) if row[13] is not None else None,
+                    'fetch_time': row[14].isoformat() if row[14] else None
+                }
+                flights.append(flight_data)
+            
+            print(f"📊 Alle gespeicherten Flüge abgerufen: {len(flights)} Flüge")
+            return flights
+            
+        except Exception as e:
+            print(f"❌ Fehler beim Abrufen aller Flüge: {e}")
+            return []
+    
     def close(self):
         """Schließt alle Verbindungen sauber."""
         if self.airtrack_db:
